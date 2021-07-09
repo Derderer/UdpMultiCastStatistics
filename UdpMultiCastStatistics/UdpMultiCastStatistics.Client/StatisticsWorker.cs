@@ -10,6 +10,11 @@ namespace UdpMultiCastStatistics.Client
     /// </summary>
     public class StatisticsWorker
     {
+        public decimal Mean { get; set; }
+        public IEnumerable<int> Mode { get; set; } = new List<int>();
+        public decimal Median { get; set; }
+        public decimal StandardDeviation { get; set; }
+
         /// <summary>
         /// Starting a new thread for calculations
         /// </summary>
@@ -22,7 +27,7 @@ namespace UdpMultiCastStatistics.Client
         /// <summary>
         /// Starting the calculation of statistics data
         /// </summary>
-        private static void GetStatisticsData()
+        private void GetStatisticsData()
         {
             while (true)
             {
@@ -40,16 +45,16 @@ namespace UdpMultiCastStatistics.Client
 
                     var calculateData = CalculateData(data);
 
-                    Program.Mean = calculateData.TotalSum / calculateData.Count;
-                    Program.Median = CalculateMedian(data, calculateData.Count);
-                    Program.StandardDeviation = CalculateStandardDeviation(data, Program.Mean, calculateData.Count);
+                    Mean = calculateData.TotalSum / calculateData.Count;
+                    Median = CalculateMedian(data, calculateData.Count);
+                    StandardDeviation = CalculateStandardDeviation(data, Mean, calculateData.Count);
 
                     var modeValue = data
                         .OrderByDescending(x => x.Value)
                         .Select(x => x.Value)
                         .FirstOrDefault();
 
-                    Program.Mode = data.Where(x => x.Value == modeValue).Select(x => x.Key);
+                    Mode = data.Where(x => x.Value == modeValue).Select(x => x.Key);
                 }
                 catch (Exception e)
                 {
@@ -62,7 +67,7 @@ namespace UdpMultiCastStatistics.Client
         /// Calculating total sum and counting all numbers
         /// </summary>
         /// <param name="data">Sorted dictionary with elements</param>
-        private static DataResult CalculateData(SortedDictionary<int, long> data)
+        private DataResult CalculateData(SortedDictionary<int, long> data)
         {
             decimal totalSum = 0;
             long totalCount = 0;
@@ -86,7 +91,7 @@ namespace UdpMultiCastStatistics.Client
         /// <param name="mean">Mean value</param>
         /// <param name="totalCount">Total count number</param>
         /// <returns>Стандартное отклонение коллекции</returns>
-        private static decimal CalculateStandardDeviation(SortedDictionary<int, long> data, decimal mean, long totalCount)
+        private decimal CalculateStandardDeviation(SortedDictionary<int, long> data, decimal mean, long totalCount)
         {
             double deviation = 0;
             if (data.Count <= 1)
@@ -117,7 +122,7 @@ namespace UdpMultiCastStatistics.Client
         /// but this is the solution that I was able to come up with at the current time.
         /// I could not find other ideas yet
         /// </remarks>
-        private static decimal CalculateMedian(SortedDictionary<int, long> data, long totalCount)
+        private decimal CalculateMedian(SortedDictionary<int, long> data, long totalCount)
         {
             var isOdd = totalCount % 2 == 1;
             var index = totalCount / 2;

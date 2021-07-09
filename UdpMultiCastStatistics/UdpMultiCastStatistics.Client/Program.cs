@@ -17,18 +17,28 @@ namespace UdpMultiCastStatistics.Client
         /// </summary>
         public static SortedDictionary<int, long> Data = new SortedDictionary<int, long>();
 
+        /// <summary>
+        /// Sleep timer in milliseconds
+        /// </summary>
         public static int SleepTimer { get; }
+
+        /// <summary>
+        /// Multicast Group, where data is received
+        /// </summary>
         public static int MulticastGroupPort { get; }
+
+        /// <summary>
+        /// Multicast Group IP
+        /// </summary>
         public static string MulticastGroupIp { get; }
 
-        public static int AvailablePackets { get; set; }
-        public static decimal Mean { get; set; }
-        public static IEnumerable<int> Mode { get; set; } = new List<int>();
-        public static decimal Median { get; set; }
-        public static decimal StandardDeviation { get; set; }
+        private static readonly StatisticsWorker StatisticsWorker;
+        private static readonly UdpClientWorker UdpWorker;
 
         static Program()
         {
+            StatisticsWorker = new StatisticsWorker();
+            UdpWorker = new UdpClientWorker();
             MulticastGroupIp = ConfigurationManager.AppSettings.Get("MulticastGroupIP");
             int.TryParse(ConfigurationManager.AppSettings.Get("MulticastGroupPort"), out var multicastGroupPort);
             int.TryParse(ConfigurationManager.AppSettings.Get("SleepTimer"), out var sleepTimer);
@@ -49,11 +59,8 @@ namespace UdpMultiCastStatistics.Client
         /// </summary>
         private static void Start()
         {
-            var udpWorker = new UdpClientWorker();
-            var statWorker = new StatisticsWorker();
-
-            udpWorker.StartWork();
-            statWorker.StartWork();
+            UdpWorker.StartWork();
+            StatisticsWorker.StartWork();
 
             while (true)
             {
@@ -82,12 +89,12 @@ namespace UdpMultiCastStatistics.Client
                 }
 
                 Console.WriteLine("==================================================");
-                Console.WriteLine("Statistical data:");
-                Console.WriteLine($"Available packets: {AvailablePackets}");
-                Console.WriteLine($"Mean: {Mean}");
-                Console.WriteLine($"Mode: {string.Join(", ", Mode)}");
-                Console.WriteLine($"Median: {Median}");
-                Console.WriteLine($"Standard deviation: {StandardDeviation}");
+                Console.WriteLine("             Statistical data");
+                Console.WriteLine($"Available pckets: {UdpWorker.AvailablePackets}");
+                Console.WriteLine($"Mean: {StatisticsWorker.Mean}");
+                Console.WriteLine($"Mode: {string.Join(", ", StatisticsWorker.Mode)}");
+                Console.WriteLine($"Median: {StatisticsWorker.Median}");
+                Console.WriteLine($"Standard deviation: {StatisticsWorker.StandardDeviation}");
                 Console.WriteLine("==================================================");
                 Console.WriteLine();
             }

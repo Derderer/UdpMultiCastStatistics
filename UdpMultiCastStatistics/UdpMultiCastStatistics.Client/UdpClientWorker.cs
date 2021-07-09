@@ -12,8 +12,10 @@ namespace UdpMultiCastStatistics.Client
     /// </summary>
     public class UdpClientWorker
     {
-        private static UdpClient _udpServerClient;
-        private static IPEndPoint _ipEndPoint;
+        private UdpClient _udpServerClient;
+        private IPEndPoint _ipEndPoint;
+
+        public int AvailablePackets { get; set; }
 
         public void StartWork()
         {
@@ -24,7 +26,7 @@ namespace UdpMultiCastStatistics.Client
         /// <summary>
         /// Start the process to receive data from Multicast Group
         /// </summary>
-        private static void StartMulticastDataReceiving()
+        private void StartMulticastDataReceiving()
         {
             InitializeUdpClient();
 
@@ -34,11 +36,11 @@ namespace UdpMultiCastStatistics.Client
                 {
                     var data = _udpServerClient.Receive(ref _ipEndPoint);
                     int.TryParse(Encoding.Unicode.GetString(data), out var result);
-                    Program.AvailablePackets = _udpServerClient.Available;
+                    AvailablePackets = _udpServerClient.Available;
 
                     lock (Program.Data)
                     {
-                        Program.AvailablePackets = _udpServerClient.Available;
+                        AvailablePackets = _udpServerClient.Available;
                         if (Program.Data.ContainsKey(result))
                         {
                             var value = Program.Data.First(x => x.Key == result).Value;
@@ -62,7 +64,7 @@ namespace UdpMultiCastStatistics.Client
         /// <summary>
         /// Initializing UDP client for listening Multicast Group
         /// </summary>
-        private static void InitializeUdpClient()
+        private void InitializeUdpClient()
         {
             _udpServerClient = new UdpClient {ExclusiveAddressUse = false};
 
